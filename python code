@@ -1,0 +1,31 @@
+
+def percentage_change(names_of_columns,df):
+    column_pre=[]
+    for i in range(len(names_of_columns)):
+        column_pre.append(names_of_columns[i]+"_pre")
+    names_of_columns = ["ln_at","roa","levt","btm","percentage_ih_scaled","ANALYS","factset_year"]
+    for i in range(len(names_of_columns)):
+        df[column_pre[i]] = df.groupby(['gvkey',"t_identifier"])[names_of_columns[i]].shift()
+
+    #drop na rows
+    df=df.dropna(subset=column_pre,how="all")
+
+    #calculate percentage change
+    columns_percentage_change = []
+    for i in range(len(names_of_columns)):
+        columns_percentage_change.append(names_of_columns[i]+"_pct_change")
+
+    for i in tqdm(range(len(column_pre))):
+        results_to_add=[]
+        for w in tqdm(range(len(df))):
+            post_column=df[names_of_columns[i]].tolist()
+            pre_column=df[column_pre[i]].tolist()
+            try:
+                results_to_add.append((post_column[w]-pre_column[w])/abs(pre_column[w]))
+            except:
+                if (pre_column[w]==0) and (post_column[w]==0):
+                    results_to_add.append(0)
+                else:
+                    results_to_add.append(1)
+        df[columns_percentage_change[i]]=results_to_add
+    return df
